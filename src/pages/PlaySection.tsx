@@ -1,5 +1,5 @@
 // src/components/PlaySection.tsx
-import { useMemo, useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import {
   RiPokerHeartsFill,
   RiPokerSpadesFill,
@@ -10,7 +10,6 @@ import DraggableCard from "./DraggableCard";
 import DropZone from "./DropZone";
 import type { Card } from "../types/card";
 
-// Reusable drop zone for a suit
 const SuitDropZone: FC<{
   cards: Card[];
   onDrop: (item: { card: Card }) => void;
@@ -18,27 +17,18 @@ const SuitDropZone: FC<{
   color?: string;
 }> = ({ cards, onDrop, Icon, color }) => (
   <div className="h-full border border-gray-600 rounded-lg shadow-inner shadow-black/30 flex flex-col items-center justify-center">
-    <DropZone onDrop={onDrop} Icon={Icon} color={color} />
-    {cards.map((card, i) => (
-      <div
-        key={i}
-        className="w-[130px] h-full bg-red-600 text-white border-2 border-white rounded-md shadow-md flex flex-col items-center justify-center"
-      >
-        <span>{card.suit}</span>
-        <span>{card.rank}</span>
-        <span>{card.value}</span>
-      </div>
-    ))}
+    <DropZone onDrop={onDrop} Icon={Icon} color={color} cards={cards} />
   </div>
 );
 
 const PlaySection: FC = () => {
+  const [deck, setDeck] = useState<Card[]>([]);
   const [heartCards, setHeartCards] = useState<Card[]>([]);
   const [diamondCards, setDiamondCards] = useState<Card[]>([]);
   const [clubCards, setClubCards] = useState<Card[]>([]);
   const [spadeCards, setSpadeCards] = useState<Card[]>([]);
 
-  const suits = ["hearts", "diamonds", "clubs", "spades"];
+  const suits = ["Hearts", "Diamonds", "Clubs", "Spades"];
   const ranks = [
     { rank: "A", value: 1 },
     { rank: "2", value: 2 },
@@ -55,27 +45,38 @@ const PlaySection: FC = () => {
     { rank: "K", value: 13 },
   ];
 
-  const hand: Card[] = useMemo(() => {
-    const deck: Card[] = [];
+  useEffect(() => {
+    const newDeck: Card[] = [];
 
     for (const suit of suits) {
       for (const { rank, value } of ranks) {
-        deck.push({
+        newDeck.push({
           suit,
           rank,
           value,
           code: `${rank}${suit[0].toUpperCase()}`,
-          img: ``,
+          img: `/playing-cards/${rank}${suit[0]}.svg`,
         });
       }
     }
 
-    return [...deck].sort(() => Math.random() - 0.5).slice(0, 7);
+    setDeck(newDeck);
   }, []);
 
-  const handleDrop = (suit: string) => (item: { card: Card }) => {
-    const { card } = item;
+  const backCard: Card = {
+    suit: "Back",
+    rank: "B",
+    value: 0,
+    code: "B",
+    img: "/playing-cards/back.svg",
+  };
 
+  const randomCard = deck[Math.floor(Math.random() * deck.length)];
+
+  const handleDrop = (suit: string) => (item: { card: Card }) => {
+    debugger;
+    const { card } = item;
+    console.log("Dropped card:", card);
     switch (suit) {
       case "hearts":
         setHeartCards((prev) => [...prev, card]);
@@ -90,11 +91,14 @@ const PlaySection: FC = () => {
         setSpadeCards((prev) => [...prev, card]);
         break;
     }
+
+    // remove the card from the deck
+    setDeck((prev) => prev.filter((c) => c.code !== card.code));
+    console.log(deck);
   };
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center">
-      {/* Game Controls */}
       <div className="px-[10%] flex gap-2 my-2">
         {["New Game", "Restart Game", "Pause Game", "About", "Options"].map(
           (text, idx) => (
@@ -106,17 +110,13 @@ const PlaySection: FC = () => {
         )}
       </div>
 
-      {/* Play Area */}
-      <div className="bg-[#00a000] w-full h-screen border-2 border-black rounded-lg flex flex-col items-center pb-5">
-        {/* Timer and Moves */}
+      <div className="bg-[#00a000] w-full h-screen border-2 border-gray-500 rounded-lg flex flex-col items-center pb-5">
         <div className="flex w-full justify-between items-center text-white p-2">
           <span>hh:mm:ss</span>
           <span>0 Moves</span>
         </div>
 
-        {/* Card Display Area */}
         <div className="flex flex-row-reverse justify-center w-full h-full">
-          {/* Drop Zones for Suits */}
           <div className="flex justify-between items-center mx-5 py-2 w-[70%] h-[45%]">
             <SuitDropZone
               cards={heartCards}
@@ -142,12 +142,25 @@ const PlaySection: FC = () => {
             />
           </div>
 
-          {/* Hand Display */}
           <div className="flex py-2 w-[20%] h-[45%] m-auto">
             <div className="flex justify-center h-full">
-              {hand.map((card, i) => (
+              {deck.map((card, i) => (
                 <DraggableCard key={i} card={card} index={i} vertical={false} />
               ))}
+              <DraggableCard
+                key="back-card"
+                card={backCard}
+                index={deck.length}
+                vertical={false}
+              />
+              {randomCard && (
+                <DraggableCard
+                  key="front-card"
+                  card={randomCard}
+                  index={deck.length + 1}
+                  vertical={false}
+                />
+              )}
             </div>
           </div>
         </div>

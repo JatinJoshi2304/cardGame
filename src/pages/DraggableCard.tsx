@@ -9,7 +9,7 @@ interface Props {
   vertical: boolean;
 }
 
-const DraggableCard: FC<Props> = ({ card, index, vertical }) => {
+const DraggableCard: FC<Props> = ({ card, index = 0, vertical }) => {
   const ref = useRef<HTMLDivElement>(null);
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -20,26 +20,31 @@ const DraggableCard: FC<Props> = ({ card, index, vertical }) => {
     }),
   }));
 
-  // Attach the drag behavior to the DOM ref
   drag(ref);
 
   const style = vertical
     ? { marginTop: index === 0 ? 0 : "-2rem", zIndex: index }
-    : { marginLeft: index === 0 ? 0 : "-7.5rem", zIndex: index };
+    : { marginLeft: index === 0 ? 0 : "-8.1rem", zIndex: index };
 
   return (
     <div
       ref={ref}
-      className="w-[130px] h-full bg-red-600 text-white border-2 border-white rounded-md shadow-md flex flex-col items-center justify-center"
+      className="w-[130px] h-full bg-white border-2 border-gray-300 rounded-md shadow-md flex items-center justify-center overflow-hidden"
       style={{
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0 : 1,
         cursor: "move",
         ...style,
       }}
     >
-      <span>{card.suit}</span>
-      <span>{card.rank}</span>
-      <span>{card.value}</span>
+      <img
+        src={card.img}
+        alt={`${card.rank} of ${card.suit}`}
+        className="w-full h-full object-cover"
+        // style={{
+        //   transform: vertical ? "rotate(90deg)" : "rotate(0deg)",
+        //   transition: "transform 0.2s ease",
+        // }}
+      />
     </div>
   );
 };
